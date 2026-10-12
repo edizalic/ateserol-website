@@ -3,10 +3,10 @@ import { LocalizedString } from './shared'
 
 export const CreateStudentProjectSchema = z.object({
   title: z.string().min(1),
-  description: LocalizedString,
+  description: LocalizedString.optional().default({ en: '', tr: '' }),
   year: z.number().int().optional(),
-  courseId: z.string().optional(),
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  courseId: z.string().optional().or(z.literal('')).transform(v => v === '' ? undefined : v),
+  imageUrl: z.string().optional().or(z.literal('')),
   published: z.boolean().default(false),
 })
 

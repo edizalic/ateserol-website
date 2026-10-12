@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import AdminForm from '@/components/admin/AdminForm'
+import AdminFilesPanel from '@/components/admin/AdminFilesPanel'
 
 export const metadata: Metadata = { title: 'Edit Material' }
 
@@ -15,6 +16,7 @@ export default async function EditMaterialPage({ params }: { params: Promise<{ i
   if (!material) notFound()
 
   return (
+    <>
     <AdminForm
       title="Edit Teaching Material"
       apiPath={`/api/materials/${id}`}
@@ -32,11 +34,13 @@ export default async function EditMaterialPage({ params }: { params: Promise<{ i
             { value: 'dataset', label: 'Dataset' },
           ],
         },
-        { key: 'fileUrl', label: 'File URL (optional)', type: 'url' },
+        { key: 'fileUrl', label: 'File (optional)', type: 'upload' },
         { key: 'course', label: 'Course (optional)' },
         { key: 'semester', label: 'Semester (optional)' },
         { key: 'published', label: 'Published', type: 'checkbox' },
       ]}
     />
+    <AdminFilesPanel apiPath={`/api/entity-files/material/${id}`} />
+    </>
   )
 }

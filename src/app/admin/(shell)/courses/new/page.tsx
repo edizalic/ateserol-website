@@ -10,6 +10,7 @@ export default function NewCoursePage() {
       apiPath="/api/courses"
       method="POST"
       redirectTo="/admin/courses"
+      fileUploadPath="/api/entity-files/course/{id}"
       fields={[
         { key: 'slug', label: 'Slug', required: true, placeholder: 'e.g. intro-to-business' },
         { key: 'title', label: 'Title', localized: true, required: true },
@@ -17,6 +18,7 @@ export default function NewCoursePage() {
         { key: 'description', label: 'Description', localized: true, type: 'textarea', rows: 4 },
         { key: 'categoryId', label: 'Category ID (optional)', placeholder: 'Prisma cuid of category' },
         { key: 'published', label: 'Published', type: 'checkbox' },
+        { key: 'files', label: 'Attach Files (optional)', type: 'files' },
       ]}
     />
   )

@@ -12,8 +12,10 @@ export async function GET(req: NextRequest) {
   const type = searchParams.get('type')
 
   try {
+    const session = await getSession()
+    const admin = isAdmin(session)
     const materials = await prisma.teachingMaterial.findMany({
-      where: type ? { type } : {},
+      where: { ...(type ? { type } : {}), ...(admin ? {} : { published: true }) },
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(materials)

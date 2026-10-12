@@ -112,8 +112,20 @@ model Reflection {
   status    ReflectionStatus @default(draft)
   featured  Boolean          @default(false)
   publishedAt DateTime?
+  files     PostFile[]
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
+}
+
+model PostFile {
+  id           String     @id @default(cuid())
+  reflectionId String
+  reflection   Reflection @relation(fields: [reflectionId], references: [id], onDelete: Cascade)
+  filename     String     // stored filename on disk (uuid-based)
+  originalName String     // original uploaded filename
+  mimeType     String
+  size         Int        // file size in bytes
+  createdAt    DateTime   @default(now())
 }
 
 model LibraryResource {
@@ -128,10 +140,34 @@ model LibraryResource {
   updatedAt   DateTime @updatedAt
 }
 
+/// Generic file attachments for any entity type (portfolio, course, event, etc.)
+model EntityFile {
+  id           String   @id @default(cuid())
+  entityType   String   // 'portfolio' | 'student-project' | 'event' | 'course' | 'library' | 'material'
+  entityId     String
+  filename     String   // stored filename on disk (uuid-based)
+  originalName String   // original uploaded filename
+  mimeType     String
+  size         Int      // file size in bytes
+  createdAt    DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
 model AdminUser {
   id           String   @id @default(cuid())
   email        String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+/// Generic uploaded image/file not tied to a specific record.
+/// Used for imageUrl and fileUrl fields across the admin.
+model MediaFile {
+  id        String   @id @default(cuid())
+  filename  String   // stored filename on disk (uuid-based)
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
 }

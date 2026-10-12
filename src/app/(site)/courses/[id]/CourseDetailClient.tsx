@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Breadcrumb } from '@/components/ui'
+import EntityFilesSection from '@/components/ui/EntityFilesSection'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 const FAQ = {
@@ -153,6 +154,8 @@ export default function CourseDetailClient() {
           </div>
         </div>
       </section>
+
+      {id && <EntityFilesSection apiPath={`/api/entity-files/course/${id}`} />}
 
       <style>{`@media (max-width: 900px) { .detail-bot-2col { grid-template-columns: 1fr !important; } }`}</style>
     </div>

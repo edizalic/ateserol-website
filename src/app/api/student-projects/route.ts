@@ -39,7 +39,11 @@ export async function POST(req: NextRequest) {
     }
     const project = await prisma.studentProject.create({ data: parsed.data })
     return NextResponse.json(project, { status: 201 })
-  } catch {
+  } catch (err) {
+    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code: string }).code === 'P2003') {
+      return NextResponse.json({ error: 'courseId does not match any existing course — leave it blank or use a valid course ID' }, { status: 400 })
+    }
+    console.error('[POST /api/student-projects] error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

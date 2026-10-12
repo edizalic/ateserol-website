@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import AdminForm from '@/components/admin/AdminForm'
+import AdminFilesPanel from '@/components/admin/AdminFilesPanel'
 
 export const metadata: Metadata = { title: 'Edit Event' }
 
@@ -15,6 +16,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
   if (!event) notFound()
 
   return (
+    <>
     <AdminForm
       title="Edit Academic Event"
       apiPath={`/api/events/${id}`}
@@ -37,5 +39,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
         { key: 'featured', label: 'Featured', type: 'checkbox' },
       ]}
     />
+    <AdminFilesPanel apiPath={`/api/entity-files/event/${id}`} />
+    </>
   )
 }

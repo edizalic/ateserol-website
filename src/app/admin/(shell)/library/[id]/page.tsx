@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import AdminForm from '@/components/admin/AdminForm'
+import AdminFilesPanel from '@/components/admin/AdminFilesPanel'
 
 export const metadata: Metadata = { title: 'Edit Library Resource' }
 
@@ -15,6 +16,7 @@ export default async function EditLibraryPage({ params }: { params: Promise<{ id
   if (!resource) notFound()
 
   return (
+    <>
     <AdminForm
       title="Edit Library Resource"
       apiPath={`/api/library/${id}`}
@@ -30,5 +32,7 @@ export default async function EditLibraryPage({ params }: { params: Promise<{ id
         { key: 'published', label: 'Published', type: 'checkbox' },
       ]}
     />
+    <AdminFilesPanel apiPath={`/api/entity-files/library/${id}`} />
+    </>
   )
 }

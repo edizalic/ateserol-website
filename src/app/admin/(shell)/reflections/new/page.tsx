@@ -10,6 +10,7 @@ export default function NewReflectionPage() {
       apiPath="/api/reflections"
       method="POST"
       redirectTo="/admin/reflections"
+      fileUploadPath="/api/reflections/{slug}/files"
       fields={[
         { key: 'slug', label: 'Slug', required: true, placeholder: 'e.g. on-teaching-purpose' },
         { key: 'title', label: 'Title', localized: true, required: true },
@@ -27,6 +28,7 @@ export default function NewReflectionPage() {
         },
         { key: 'publishedAt', label: 'Publish Date', type: 'date' },
         { key: 'featured', label: 'Featured', type: 'checkbox' },
+        { key: 'files', label: 'Additional Files', type: 'files' },
       ]}
     />
   )

@@ -12,7 +12,10 @@ function isAdmin(session: string | null) {
 export async function GET(_req: NextRequest, { params }: Params) {
   const { slug } = await params
   try {
-    const reflection = await prisma.reflection.findFirst({ where: { slug, status: 'published' } })
+    // Return published reflections to the public; forthcoming/draft require admin.
+    const reflection = await prisma.reflection.findFirst({
+      where: { slug, status: { in: ['published', 'forthcoming'] } },
+    })
     if (!reflection) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json(reflection)
   } catch {

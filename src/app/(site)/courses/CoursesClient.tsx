@@ -1,9 +1,24 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Breadcrumb } from '@/components/ui'
 import { useLanguage } from '@/contexts/LanguageContext'
+
+interface Course {
+  id: string
+  slug: string
+  title: Record<string, string>
+  subtitle?: Record<string, string>
+  description?: Record<string, string>
+  published: boolean
+  category?: { name: Record<string, string> } | null
+}
+
+function loc(obj: Record<string, string> | undefined | null, lang: string): string {
+  if (!obj) return ''
+  return obj[lang] || obj['en'] || ''
+}
 
 const T = {
   en: {
@@ -101,11 +116,26 @@ const arrow = (
   </svg>
 )
 
+const COURSES_T = {
+  en: { eyebrow: 'Course Catalogue', heading: 'Published Courses', viewCourse: 'View Course', noCourses: 'No courses have been published yet.' },
+  tr: { eyebrow: 'Ders Kataloğu', heading: 'Yayımlanan Dersler', viewCourse: 'Dersi İncele', noCourses: 'Henüz yayımlanmış ders yok.' },
+  fr: { eyebrow: 'Catalogue de cours', heading: 'Cours publiés', viewCourse: 'Voir le cours', noCourses: "Aucun cours n'a encore été publié." },
+}
+
 export default function CoursesClient() {
   const [search, setSearch] = useState('')
+  const [courses, setCourses] = useState<Course[]>([])
   const { lang } = useLanguage()
   const L = T[lang]
+  const CL = COURSES_T[lang]
   const teachingAreas = TEACHING_AREAS[lang]
+
+  useEffect(() => {
+    fetch('/api/courses')
+      .then(r => r.ok ? r.json() : [])
+      .then(setCourses)
+      .catch(() => {})
+  }, [])
 
   const filtered = useMemo(() => {
     if (!search.trim()) return teachingAreas
@@ -168,6 +198,35 @@ export default function CoursesClient() {
           )}
         </div>
       </section>
+
+      {/* Published courses from DB */}
+      {courses.length > 0 && (
+        <section style={{ padding: '56px 32px', backgroundColor: '#FAFAF8', borderTop: '1px solid #E7E0D3' }}>
+          <div style={{ maxWidth: 1240, margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+              <span style={{ display: 'block', width: 28, height: 1.5, backgroundColor: '#B08D45' }} />
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10.5, fontWeight: 500, color: '#B08D45', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{CL.eyebrow}</span>
+            </div>
+            <h2 style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 'clamp(20px, 2.5vw, 28px)', fontWeight: 700, color: '#0B1F33', margin: '0 0 28px', lineHeight: 1.2 }}>{CL.heading}</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 1, backgroundColor: '#E7E0D3', border: '1px solid #E7E0D3' }}>
+              {courses.map(course => (
+                <Link key={course.id} href={`/courses/${course.id}`}
+                  style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF', padding: '28px 26px', textDecoration: 'none', borderTop: '2px solid transparent' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderTopColor = '#B08D45' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderTopColor = 'transparent' }}>
+                  {course.category && <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: '#B08D45', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>{loc(course.category.name, lang)}</div>}
+                  <h3 style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 17, fontWeight: 700, color: '#0B1F33', margin: '0 0 6px', lineHeight: 1.25 }}>{loc(course.title, lang)}</h3>
+                  {loc(course.subtitle, lang) && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontStyle: 'italic', color: '#6A747D', margin: '0 0 12px' }}>{loc(course.subtitle, lang)}</p>}
+                  {loc(course.description, lang) && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#6A747D', lineHeight: 1.65, margin: '0 0 16px', flexGrow: 1 }}>{loc(course.description, lang).slice(0, 160)}{loc(course.description, lang).length > 160 ? '…' : ''}</p>}
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: '#0B1F33', letterSpacing: '0.06em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6, marginTop: 'auto' }}>
+                    {CL.viewCourse} {arrow}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section style={{ backgroundColor: '#FFFFFF', borderTop: '1px solid #E7E0D3', borderBottom: '1px solid #E7E0D3', padding: '56px 32px' }}>
         <div style={{ maxWidth: 1240, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, backgroundColor: '#E7E0D3', border: '1px solid #E7E0D3' }} className="courses-structure-2col">

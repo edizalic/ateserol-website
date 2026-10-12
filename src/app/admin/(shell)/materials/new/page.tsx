@@ -10,6 +10,7 @@ export default function NewMaterialPage() {
       apiPath="/api/materials"
       method="POST"
       redirectTo="/admin/materials"
+      fileUploadPath="/api/entity-files/material/{id}"
       fields={[
         { key: 'title', label: 'Title', localized: true, required: true },
         {
@@ -21,10 +22,11 @@ export default function NewMaterialPage() {
             { value: 'dataset', label: 'Dataset' },
           ],
         },
-        { key: 'fileUrl', label: 'File URL (optional)', type: 'url' },
+        { key: 'fileUrl', label: 'File (optional)', type: 'upload' },
         { key: 'course', label: 'Course (optional)', placeholder: 'e.g. BUS 101' },
         { key: 'semester', label: 'Semester (optional)', placeholder: 'e.g. Spring 2026' },
         { key: 'published', label: 'Published', type: 'checkbox' },
+        { key: 'files', label: 'Attach Files (optional)', type: 'files' },
       ]}
     />
   )

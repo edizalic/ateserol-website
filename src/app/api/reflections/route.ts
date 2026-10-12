@@ -16,7 +16,11 @@ export async function GET(req: NextRequest) {
 
   try {
     const reflections = await prisma.reflection.findMany({
-      where: admin ? (status ? { status } : {}) : { status: 'published' },
+      // Admins can filter by any status or get all.
+      // Public visitors get published + forthcoming (so forthcoming titles are visible on the list).
+      where: admin
+        ? (status ? { status } : {})
+        : (status === 'forthcoming' ? { status: 'forthcoming' } : { status: 'published' }),
       orderBy: { publishedAt: 'desc' },
     })
     return NextResponse.json(reflections)
@@ -31,13 +35,21 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
+    console.log('[POST /api/reflections] body received:', JSON.stringify(body, null, 2))
+
     const parsed = CreateReflectionSchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
+      const flat = parsed.error.flatten()
+      console.error('[POST /api/reflections] validation failed:', JSON.stringify(flat, null, 2))
+      return NextResponse.json({ error: 'Validation failed', details: flat }, { status: 400 })
     }
+
+    console.log('[POST /api/reflections] parsed ok, creating…')
     const reflection = await prisma.reflection.create({ data: parsed.data })
+    console.log('[POST /api/reflections] created id=%s slug=%s', reflection.id, reflection.slug)
     return NextResponse.json(reflection, { status: 201 })
-  } catch {
+  } catch (err) {
+    console.error('[POST /api/reflections] unexpected error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

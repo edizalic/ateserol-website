@@ -12,8 +12,10 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get('category')
 
   try {
+    const session = await getSession()
+    const admin = isAdmin(session)
     const resources = await prisma.libraryResource.findMany({
-      where: category ? { category } : {},
+      where: { ...(category ? { category } : {}), ...(admin ? {} : { published: true }) },
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(resources)

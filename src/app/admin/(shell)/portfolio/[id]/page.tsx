@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import AdminForm from '@/components/admin/AdminForm'
+import AdminFilesPanel from '@/components/admin/AdminFilesPanel'
 
 export const metadata: Metadata = { title: 'Edit Portfolio Entry' }
 
@@ -15,6 +16,7 @@ export default async function EditPortfolioPage({ params }: { params: Promise<{ 
   if (!entry) notFound()
 
   return (
+    <>
     <AdminForm
       title="Edit Portfolio Entry"
       apiPath={`/api/portfolio/${id}`}
@@ -33,12 +35,14 @@ export default async function EditPortfolioPage({ params }: { params: Promise<{ 
         { key: 'title', label: 'Title', localized: true, required: true },
         { key: 'description', label: 'Description', localized: true, type: 'textarea', rows: 4 },
         { key: 'url', label: 'URL (optional)', type: 'url' },
-        { key: 'imageUrl', label: 'Image URL (optional)', type: 'url' },
+        { key: 'imageUrl', label: 'Image (optional)', type: 'image' },
         { key: 'date', label: 'Date (optional)', type: 'date' },
         { key: 'tags', label: 'Tags (comma-separated)', placeholder: 'strategy, research, AI' },
         { key: 'featured', label: 'Featured', type: 'checkbox' },
         { key: 'published', label: 'Published', type: 'checkbox' },
       ]}
     />
+    <AdminFilesPanel apiPath={`/api/entity-files/portfolio/${id}`} />
+    </>
   )
 }

@@ -1,9 +1,21 @@
 'use client'
 
 import Link from 'next/link'
-import type { ReactNode } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import IllustratedIcon, { type IllustratedIconName } from '@/components/IllustratedIcon'
+
+interface Reflection {
+  slug: string
+  title: Record<string, string>
+  subtitle?: Record<string, string>
+  excerpt?: Record<string, string>
+}
+
+function loc(obj: Record<string, string> | undefined, lang: string): string {
+  if (!obj) return ''
+  return obj[lang] || obj['en'] || ''
+}
 
 /* ─── Section label ─── */
 
@@ -67,25 +79,6 @@ const COURSE_AREAS = [
   { title: 'Strategy & decision-making', titleTr: 'Strateji ve karar verme', titleFr: 'Stratégie et prise de décision' },
   { title: 'Research, data & AI', titleTr: 'Araştırma, veri ve yapay zekâ', titleFr: 'Recherche, données et IA' },
 ]
-
-const LATEST_REFLECTION = {
-  id: 'why-most-business-plans-miss-the-point',
-  title: {
-    en: 'Why Most Business Plans Miss the Point',
-    tr: 'Çoğu İş Planı Neden Amacını Kaçırıyor',
-    fr: "Pourquoi la plupart des plans d'affaires manquent l'essentiel",
-  },
-  subtitle: {
-    en: 'A polished document can still avoid the difficult questions.',
-    tr: 'Özenle hazırlanmış bir belge yine de zor sorulardan kaçınabilir.',
-    fr: 'Un document soigné peut encore éviter les questions difficiles.',
-  },
-  excerpt: {
-    en: 'A business plan can be polished, complete and still avoid the difficult part: testing whether the assumptions beneath it deserve to be believed. This reflection looks at the difference between filling a template and making an argument.',
-    tr: 'Bir iş planı özenli ve eksiksiz göründüğü hâlde en zor kısımdan kaçınabilir: planın dayandığı varsayımların inandırıcı olup olmadığını sınamak. Bu yazı, bir şablonu doldurmakla bir sav kurmak arasındaki farkı ele alır.',
-    fr: "Un business plan peut être soigné, complet, et pourtant éviter l'essentiel : examiner si les hypothèses qui le soutiennent méritent d'être crues. Cette réflexion porte sur la différence entre remplir un modèle et construire un argument.",
-  },
-}
 
 const TEXT = {
   en: {
@@ -165,7 +158,14 @@ const TEXT = {
 export default function HomePageClient() {
   const { lang } = useLanguage()
   const L = TEXT[lang]
-  const ref = LATEST_REFLECTION
+  const [ref, setRef] = useState<Reflection | null>(null)
+
+  useEffect(() => {
+    fetch('/api/reflections')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: Reflection[]) => { if (data.length) setRef(data[0]) })
+      .catch(() => {})
+  }, [])
 
   const courseCards = [
     {
@@ -286,10 +286,16 @@ export default function HomePageClient() {
         {/* Latest reflection */}
         <div className="ref-latest-list">
           <SectionLabel icon="reflections" iconSize={36}>{L.latestLabel}</SectionLabel>
-          <h2>{ref.title[lang]}</h2>
-          <p>{ref.subtitle[lang]}</p>
-          <p>{ref.excerpt[lang]}</p>
-          <Link href={`/reflections/${ref.id}`} className="ref-inline-link">{L.latestRead} <ArrowRight /></Link>
+          {ref ? (
+            <>
+              <h2>{loc(ref.title, lang)}</h2>
+              {ref.subtitle && <p>{loc(ref.subtitle, lang)}</p>}
+              {ref.excerpt && <p>{loc(ref.excerpt, lang)}</p>}
+              <Link href={`/reflections/${ref.slug}`} className="ref-inline-link">{L.latestRead} <ArrowRight /></Link>
+            </>
+          ) : (
+            <p style={{ color: '#6A747D', fontFamily: 'Inter, sans-serif', fontSize: 13 }}>—</p>
+          )}
         </div>
       </section>
 

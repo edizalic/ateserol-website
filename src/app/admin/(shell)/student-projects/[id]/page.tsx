@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import AdminForm from '@/components/admin/AdminForm'
+import AdminFilesPanel from '@/components/admin/AdminFilesPanel'
 
 export const metadata: Metadata = { title: 'Edit Student Project' }
 
@@ -15,6 +16,7 @@ export default async function EditStudentProjectPage({ params }: { params: Promi
   if (!project) notFound()
 
   return (
+    <>
     <AdminForm
       title="Edit Student Project"
       apiPath={`/api/student-projects/${id}`}
@@ -26,9 +28,11 @@ export default async function EditStudentProjectPage({ params }: { params: Promi
         { key: 'description', label: 'Description', localized: true, type: 'textarea', rows: 3 },
         { key: 'year', label: 'Year', type: 'number' },
         { key: 'courseId', label: 'Course ID (optional)' },
-        { key: 'imageUrl', label: 'Image URL (optional)', type: 'url' },
+        { key: 'imageUrl', label: 'Image (optional)', type: 'image' },
         { key: 'published', label: 'Published', type: 'checkbox' },
       ]}
     />
+    <AdminFilesPanel apiPath={`/api/entity-files/student-project/${id}`} />
+    </>
   )
 }

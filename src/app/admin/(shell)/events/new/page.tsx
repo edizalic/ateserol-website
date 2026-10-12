@@ -10,6 +10,7 @@ export default function NewEventPage() {
       apiPath="/api/events"
       method="POST"
       redirectTo="/admin/events"
+      fileUploadPath="/api/entity-files/event/{id}"
       fields={[
         { key: 'title', label: 'Title', localized: true, required: true },
         { key: 'description', label: 'Description', localized: true, type: 'textarea', rows: 3 },
@@ -24,6 +25,7 @@ export default function NewEventPage() {
           ],
         },
         { key: 'featured', label: 'Featured', type: 'checkbox' },
+        { key: 'files', label: 'Attach Files (optional)', type: 'files' },
       ]}
     />
   )

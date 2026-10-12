@@ -6,7 +6,7 @@ export const MaterialTypeSchema = z.enum(['presentation', 'note', 'template', 'd
 export const CreateTeachingMaterialSchema = z.object({
   title: LocalizedString,
   type: MaterialTypeSchema,
-  fileUrl: z.string().url().optional().or(z.literal('')),
+  fileUrl: z.string().optional().or(z.literal('')),
   course: z.string().optional(),
   semester: z.string().optional(),
   published: z.boolean().default(false),

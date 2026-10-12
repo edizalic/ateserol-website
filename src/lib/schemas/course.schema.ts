@@ -17,16 +17,16 @@ export const CreateCourseSchema = z.object({
   slug: z.string().min(1),
   title: LocalizedString,
   subtitle: LocalizedString.optional(),
-  description: LocalizedString,
-  outcomes: LocalizedStringArray,
+  description: LocalizedString.optional().default({ en: '', tr: '' }),
+  outcomes: LocalizedStringArray.optional().default({ en: [], tr: [] }),
   weeklyPlan: z.object({
     en: z.array(WeekItemSchema),
     tr: z.array(WeekItemSchema),
-  }),
+  }).optional().default({ en: [], tr: [] }),
   assessments: z.object({
     en: z.array(AssessmentItemSchema),
     tr: z.array(AssessmentItemSchema),
-  }),
+  }).optional().default({ en: [], tr: [] }),
   published: z.boolean().default(false),
   categoryId: z.string().optional(),
 })
