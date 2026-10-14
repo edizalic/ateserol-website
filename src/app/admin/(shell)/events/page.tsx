@@ -3,6 +3,7 @@ import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import AdminEventsClient from './AdminEventsClient'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Events' }
 
 export default async function AdminEventsPage() {

@@ -63,6 +63,15 @@ done
 echo "  Database is ready."
 
 # ---------------------------------------------------------------------------
+# 3b. Fix uploads directory ownership (idempotent — safe on every deploy)
+# ---------------------------------------------------------------------------
+echo ""
+echo "[3b] Ensuring /app/uploads is writable by the app user..."
+docker compose -f "$COMPOSE_FILE" exec -T --user root app \
+  sh -c "mkdir -p /app/uploads && chown -R 1001:1001 /app/uploads && chmod 755 /app/uploads"
+echo "  Uploads directory is ready."
+
+# ---------------------------------------------------------------------------
 # 4. Run database seed using the builder image (has full node_modules + tsx)
 # ---------------------------------------------------------------------------
 echo ""

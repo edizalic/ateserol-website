@@ -3,6 +3,7 @@ import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import AdminMaterialsClient from './AdminMaterialsClient'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Teaching Materials' }
 
 export default async function AdminMaterialsPage() {

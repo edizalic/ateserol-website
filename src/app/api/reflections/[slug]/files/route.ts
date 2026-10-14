@@ -70,19 +70,32 @@ export async function POST(req: NextRequest, { params }: Params) {
     const ext = path.extname(file.name)
     const storedName = `${randomUUID()}${ext}`
     const buffer = Buffer.from(await file.arrayBuffer())
-    await fs.writeFile(uploadedFilePath(storedName), buffer)
 
-    const record = await prisma.postFile.create({
-      data: {
-        reflectionId: reflection.id,
-        filename: storedName,
-        originalName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        size: buffer.length,
-      },
-      select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true },
-    })
-    created.push(record)
+    try {
+      await fs.writeFile(uploadedFilePath(storedName), buffer)
+    } catch (err) {
+      console.error('[POST reflections/files] disk write failed:', err)
+      return NextResponse.json({ error: 'Could not save file to disk. Check uploads directory permissions.' }, { status: 500 })
+    }
+
+    try {
+      const record = await prisma.postFile.create({
+        data: {
+          reflectionId: reflection.id,
+          filename: storedName,
+          originalName: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          size: buffer.length,
+        },
+        select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true },
+      })
+      created.push(record)
+    } catch (err) {
+      // DB write failed — remove the orphaned file from disk
+      await fs.unlink(uploadedFilePath(storedName)).catch(() => {})
+      console.error('[POST reflections/files] db write failed:', err)
+      return NextResponse.json({ error: 'Could not save file record to database.' }, { status: 500 })
+    }
   }
 
   return NextResponse.json(created, { status: 201 })

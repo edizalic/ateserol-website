@@ -3,6 +3,7 @@ import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import AdminLibraryClient from './AdminLibraryClient'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Library' }
 
 export default async function AdminLibraryPage() {

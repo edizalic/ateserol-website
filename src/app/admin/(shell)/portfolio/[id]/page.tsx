@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma'
 import AdminForm from '@/components/admin/AdminForm'
 import AdminFilesPanel from '@/components/admin/AdminFilesPanel'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Edit Portfolio Entry' }
 
 export default async function EditPortfolioPage({ params }: { params: Promise<{ id: string }> }) {

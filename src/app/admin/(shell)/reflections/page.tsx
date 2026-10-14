@@ -3,6 +3,7 @@ import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import AdminReflectionsClient from './AdminReflectionsClient'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Reflections' }
 
 export default async function AdminReflectionsPage() {

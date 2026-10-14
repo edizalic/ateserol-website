@@ -46,6 +46,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/src/generated ./src/generated
 
+# Create the uploads directory with correct ownership BEFORE switching to the
+# nextjs user. Docker named volumes are mounted over this path at runtime; by
+# creating it here the volume inherits the correct owner on first use.
+RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
+
 USER nextjs
 
 EXPOSE 3000

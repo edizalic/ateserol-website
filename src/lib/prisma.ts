@@ -12,7 +12,9 @@ const globalForPrisma = globalThis as unknown as { prisma: ReturnType<typeof cre
 
 const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+// Cache the client globally in all environments (not just dev) to avoid
+// exhausting the connection pool when many server-side requests run in parallel.
+globalForPrisma.prisma = prisma
 
 export { prisma }
 export default prisma

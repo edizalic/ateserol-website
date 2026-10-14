@@ -55,20 +55,32 @@ export async function POST(req: NextRequest, { params }: Params) {
     const ext = path.extname(file.name)
     const storedName = `${randomUUID()}${ext}`
     const buffer = Buffer.from(await file.arrayBuffer())
-    await fs.writeFile(uploadedFilePath(storedName), buffer)
 
-    const record = await prisma.entityFile.create({
-      data: {
-        entityType,
-        entityId,
-        filename: storedName,
-        originalName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        size: buffer.length,
-      },
-      select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true },
-    })
-    created.push(record)
+    try {
+      await fs.writeFile(uploadedFilePath(storedName), buffer)
+    } catch (err) {
+      console.error(`[POST entity-files/${entityType}/${entityId}] disk write failed:`, err)
+      return NextResponse.json({ error: 'Could not save file to disk. Check uploads directory permissions.' }, { status: 500 })
+    }
+
+    try {
+      const record = await prisma.entityFile.create({
+        data: {
+          entityType,
+          entityId,
+          filename: storedName,
+          originalName: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          size: buffer.length,
+        },
+        select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true },
+      })
+      created.push(record)
+    } catch (err) {
+      await fs.unlink(uploadedFilePath(storedName)).catch(() => {})
+      console.error(`[POST entity-files/${entityType}/${entityId}] db write failed:`, err)
+      return NextResponse.json({ error: 'Could not save file record to database.' }, { status: 500 })
+    }
   }
 
   return NextResponse.json(created, { status: 201 })

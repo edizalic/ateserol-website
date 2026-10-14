@@ -34,12 +34,21 @@ export default function AdminFilesPanel({ apiPath }: AdminFilesPanelProps) {
   const [uploading, setUploading] = useState(false)
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [error, setError] = useState('')
+  const [fetchError, setFetchError] = useState('')
 
   const fetchFiles = useCallback(async () => {
     setLoading(true)
+    setFetchError('')
     try {
       const res = await fetch(apiPath)
-      if (res.ok) setFiles(await res.json())
+      if (res.ok) {
+        setFiles(await res.json())
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setFetchError(data.error ?? `Failed to load files (${res.status})`)
+      }
+    } catch {
+      setFetchError('Network error — could not load files.')
     } finally {
       setLoading(false)
     }
@@ -79,6 +88,12 @@ export default function AdminFilesPanel({ apiPath }: AdminFilesPanelProps) {
       {error && (
         <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', padding: '10px 14px', marginBottom: 16, fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#DC2626' }}>
           {error}
+        </div>
+      )}
+
+      {fetchError && (
+        <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', padding: '10px 14px', marginBottom: 16, fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#DC2626' }}>
+          ⚠ {fetchError}
         </div>
       )}
 

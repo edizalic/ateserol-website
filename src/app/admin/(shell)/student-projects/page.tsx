@@ -3,6 +3,7 @@ import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import AdminStudentProjectsClient from './AdminStudentProjectsClient'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Student Projects' }
 
 export default async function AdminStudentProjectsPage() {
