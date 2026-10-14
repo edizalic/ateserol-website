@@ -76,6 +76,11 @@ export default function AdminFilesPanel({ apiPath }: AdminFilesPanelProps) {
           resolve(true)
           return
         }
+        if (xhr.status === 413) {
+          setError('The reverse proxy rejected this file (HTTP 413). Files over ~1 MB are blocked until nginx sets client_max_body_size 50M; then reload nginx.')
+          resolve(false)
+          return
+        }
         try {
           const data = JSON.parse(xhr.responseText) as { error?: string }
           setError(data.error ?? `Upload failed (${xhr.status})`)

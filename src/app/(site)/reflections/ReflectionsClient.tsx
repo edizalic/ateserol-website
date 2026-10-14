@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Breadcrumb, SectionLabel, Tag } from '@/components/ui'
+import { Breadcrumb, Tag } from '@/components/ui'
+import IllustratedIcon from '@/components/IllustratedIcon'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Reflection {
@@ -11,16 +12,16 @@ interface Reflection {
   title: Record<string, string>
   subtitle?: Record<string, string>
   excerpt?: Record<string, string>
-  category?: Record<string, string>
+  categories?: { id: string; name: Record<string, string> }[]
   status: string
   featured: boolean
   publishedAt?: string
+  imageUrl?: string | null
 }
 
 const T = {
   en: {
     breadcrumbHome: 'Home', breadcrumbReflections: 'Reflections',
-    sectionLabel: 'Writing',
     heading: 'Notes on teaching, business and judgment',
     subheading: 'Shorter essays drawn from questions that recur in teaching: what a framework helps us see, what a project reveals, how students should use AI, and what happens when education rewards the appearance of certainty more than honest reasoning.',
     publishedTag: 'Published', readEssay: 'Read essay',
@@ -28,11 +29,9 @@ const T = {
     forthcomingHeading: 'Forthcoming Essays', forthcomingNote: 'In progress — not yet published',
     forthcomingDisclaimer: 'These titles represent editorial concepts under development.',
     empty: 'No reflections published yet.',
-    featuredQuote: '"The form has been mastered. The thinking has been replaced by it."',
   },
   tr: {
     breadcrumbHome: 'Ana Sayfa', breadcrumbReflections: 'Düşünceler',
-    sectionLabel: 'Yazılar',
     heading: 'Öğretim, işletme ve muhakeme üzerine notlar',
     subheading: 'Öğretimde tekrar tekrar karşıma çıkan sorulardan doğan kısa yazılar.',
     publishedTag: 'Yayınlandı', readEssay: 'Denemeyi oku',
@@ -40,11 +39,9 @@ const T = {
     forthcomingHeading: 'Yakında Yayınlanacak Denemeler', forthcomingNote: 'Devam ediyor — henüz yayınlanmadı',
     forthcomingDisclaimer: 'Bu başlıklar geliştirme aşamasındaki editoryal kavramları temsil etmektedir.',
     empty: 'Henüz yayınlanmış düşünce yok.',
-    featuredQuote: '"Form ustalıkla uygulanmış. Düşünce ise formun yerini almış."',
   },
   fr: {
     breadcrumbHome: 'Accueil', breadcrumbReflections: 'Réflexions',
-    sectionLabel: 'Écrits',
     heading: "Notes sur l'enseignement, la gestion et le jugement",
     subheading: "Essais plus courts nés de questions qui reviennent dans l'enseignement.",
     publishedTag: 'Publié', readEssay: "Lire l'essai",
@@ -52,7 +49,6 @@ const T = {
     forthcomingHeading: 'Essais à venir', forthcomingNote: 'En cours — pas encore publié',
     forthcomingDisclaimer: 'Ces titres représentent des concepts éditoriaux en développement.',
     empty: "Aucune réflexion publiée pour l'instant.",
-    featuredQuote: '« La forme a été maîtrisée. La pensée a été remplacée par elle. »',
   },
 }
 
@@ -79,24 +75,23 @@ export default function ReflectionsClient() {
     }).catch(() => setLoaded(true))
   }, [])
 
-  const featured = published.find(r => r.featured) ?? published[0]
-  const rest = published.filter(r => r.id !== featured?.id)
+  const ordered = [...published].sort((a, b) => Number(b.featured) - Number(a.featured))
 
   return (
     <div style={{ backgroundColor: '#FFFFFF' }}>
-      <Breadcrumb items={[{ label: L.breadcrumbHome, href: '/' }, { label: L.breadcrumbReflections }]} />
+      <Breadcrumb backgroundColor="#F7F5F0" items={[{ label: L.breadcrumbHome, href: '/' }, { label: L.breadcrumbReflections }]} />
 
-      {/* Header */}
-      <section style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E7E0D3', padding: '56px 32px 40px' }}>
-        <div style={{ maxWidth: 1240, margin: '0 auto' }}>
-          <SectionLabel text={L.sectionLabel} />
-          <h1 style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 'clamp(24px, 3.5vw, 40px)', fontWeight: 700, color: '#0B1F33', margin: '0 0 12px', lineHeight: 1.15, letterSpacing: '-0.01em' }}>{L.heading}</h1>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, color: '#6A747D', lineHeight: 1.75, margin: 0, maxWidth: 560 }}>{L.subheading}</p>
+      <section style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E7E0D3', padding: '72px 32px 80px', textAlign: 'center' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
+            <IllustratedIcon name="reflections" size={112} alt="" />
+          </div>
+          <h1 style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 'clamp(34px, 4.4vw, 52px)', fontWeight: 700, color: '#0B1F33', margin: '0 auto 20px', lineHeight: 1.15, letterSpacing: '-0.02em', maxWidth: 640 }}>{L.heading}</h1>
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 16, color: '#6A747D', lineHeight: 1.75, margin: '0 auto', maxWidth: 680 }}>{L.subheading}</p>
         </div>
       </section>
 
-      {/* Published — featured */}
-      {loaded && !featured && (
+      {loaded && ordered.length === 0 && (
         <section style={{ padding: '48px 32px', backgroundColor: '#FFFFFF' }}>
           <div style={{ maxWidth: 1240, margin: '0 auto' }}>
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#6A747D' }}>{L.empty}</p>
@@ -104,53 +99,47 @@ export default function ReflectionsClient() {
         </section>
       )}
 
-      {featured && (
-        <section style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E7E0D3', padding: '0 32px' }}>
-          <div style={{ maxWidth: 1240, margin: '0 auto' }}>
-            <Link href={`/reflections/${featured.slug}`} style={{ display: 'block', textDecoration: 'none', padding: '40px 0' }}>
-              <div style={{ display: 'grid', gap: 48, alignItems: 'center' }} className="ref-featured-grid">
-                <div>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
-                    <Tag label={L.publishedTag} color="#3D5A4A" />
-                    {featured.category && <Tag label={loc(featured.category, lang)} />}
+      {ordered.map(reflection => {
+        const quote = loc(reflection.excerpt, lang) || loc(reflection.subtitle, lang)
+        return (
+          <section key={reflection.id} style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E7E0D3', padding: '0 32px' }}>
+            <div style={{ maxWidth: 1240, margin: '0 auto' }}>
+              <Link href={`/reflections/${reflection.slug}`} style={{ display: 'block', textDecoration: 'none', padding: '40px 0' }}>
+                <div style={{ display: 'grid', gap: 48, alignItems: 'stretch' }} className="ref-featured-grid">
+                  <div>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
+                      <Tag label={L.publishedTag} color="#3D5A4A" />
+                      {(reflection.categories ?? []).map(category => {
+                        const label = loc(category.name, lang)
+                        return label ? <Tag key={category.id} label={label} /> : null
+                      })}
+                    </div>
+                    <h2 style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: 700, color: '#0B1F33', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.01em' }}>{loc(reflection.title, lang)}</h2>
+                    {reflection.subtitle && <div style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontStyle: 'italic', fontSize: 16, color: '#6A747D', marginBottom: 14 }}>{loc(reflection.subtitle, lang)}</div>}
+                    {reflection.excerpt && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#6A747D', lineHeight: 1.75, margin: '0 0 20px' }}>{loc(reflection.excerpt, lang)}</p>}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#0B1F33', borderBottom: '1px solid #0B1F33', paddingBottom: 1, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                      {L.readEssay}
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M6 1l3 3-3 3M1 4h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </span>
                   </div>
-                  <h2 style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: 700, color: '#0B1F33', margin: '0 0 8px', lineHeight: 1.2, letterSpacing: '-0.01em' }}>{loc(featured.title, lang)}</h2>
-                  {featured.subtitle && <div style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontStyle: 'italic', fontSize: 16, color: '#6A747D', marginBottom: 14 }}>{loc(featured.subtitle, lang)}</div>}
-                  {featured.excerpt && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#6A747D', lineHeight: 1.75, margin: '0 0 20px' }}>{loc(featured.excerpt, lang)}</p>}
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, color: '#0B1F33', borderBottom: '1px solid #0B1F33', paddingBottom: 1, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                    {L.readEssay}
-                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M6 1l3 3-3 3M1 4h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </span>
+                  {reflection.imageUrl ? (
+                    <div className="ref-thumb">
+                      <img src={reflection.imageUrl} alt="" />
+                    </div>
+                  ) : (
+                    <div style={{ backgroundColor: '#0B1F33', padding: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ width: 32, height: 1.5, backgroundColor: '#B08D45', margin: quote ? '0 auto 16px' : '0 auto' }} />
+                        {quote && <div className="ref-pull">{quote}</div>}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div style={{ backgroundColor: '#0B1F33', padding: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ width: 32, height: 1.5, backgroundColor: '#B08D45', margin: '0 auto 16px' }} />
-                    <div style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 15, fontStyle: 'italic', color: '#D6D0C5', lineHeight: 1.65 }}>{L.featuredQuote}</div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* Published — rest */}
-      {rest.length > 0 && (
-        <section style={{ padding: '48px 32px', backgroundColor: '#FFFFFF', borderBottom: '1px solid #E7E0D3' }}>
-          <div style={{ maxWidth: 1240, margin: '0 auto', display: 'grid', gap: 1, backgroundColor: '#E7E0D3', border: '1px solid #E7E0D3' }} className="ref-grid">
-            {rest.map(r => (
-              <Link key={r.id} href={`/reflections/${r.slug}`} style={{ display: 'block', backgroundColor: '#FFFFFF', padding: '28px 26px', textDecoration: 'none' }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
-                  <Tag label={L.publishedTag} color="#3D5A4A" />
-                  {r.category && <Tag label={loc(r.category, lang)} />}
-                </div>
-                <h3 style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 17, fontWeight: 700, color: '#0B1F33', margin: '0 0 6px', lineHeight: 1.3 }}>{loc(r.title, lang)}</h3>
-                {r.subtitle && <div style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontStyle: 'italic', fontSize: 14, color: '#6A747D', lineHeight: 1.4 }}>{loc(r.subtitle, lang)}</div>}
               </Link>
-            ))}
-          </div>
-        </section>
-      )}
+            </div>
+          </section>
+        )
+      })}
 
       {/* Forthcoming */}
       {forthcoming.length > 0 && (
@@ -165,7 +154,10 @@ export default function ReflectionsClient() {
                 <div key={r.id} style={{ backgroundColor: '#FFFFFF', padding: '28px 26px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                     <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 500, color: '#B08D45', border: '1px solid #B08D45', padding: '2px 7px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{L.forthcomingBadge}</span>
-                    {r.category && <Tag label={loc(r.category, lang)} />}
+                    {(r.categories ?? []).map(category => {
+                      const label = loc(category.name, lang)
+                      return label ? <Tag key={category.id} label={label} /> : null
+                    })}
                   </div>
                   <h3 style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 15, fontWeight: 700, color: '#6A747D', margin: 0, lineHeight: 1.35 }}>{loc(r.title, lang)}</h3>
                   {r.subtitle && <div style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontStyle: 'italic', fontSize: 13, color: '#8A9299', lineHeight: 1.4 }}>{loc(r.subtitle, lang)}</div>}
@@ -178,12 +170,23 @@ export default function ReflectionsClient() {
       )}
 
       <style>{`
-        .ref-featured-grid { grid-template-columns: 1fr 280px; }
-        .ref-grid { grid-template-columns: repeat(2, 1fr); }
+        .ref-featured-grid { grid-template-columns: 1fr 280px; align-items: stretch; }
+        .ref-thumb { min-height: 200px; height: 100%; overflow: hidden; background-color: #F3EFE8; }
+        .ref-thumb img { display: block; width: 100%; height: 100%; min-height: 200px; object-fit: cover; }
+        .ref-pull {
+          font-family: 'Libre Baskerville', Georgia, serif;
+          font-size: 15px;
+          font-style: italic;
+          color: #D6D0C5;
+          line-height: 1.65;
+          display: -webkit-box;
+          -webkit-line-clamp: 6;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
         .ref-forthcoming-grid { grid-template-columns: repeat(3, 1fr); }
         @media (max-width: 900px) {
           .ref-featured-grid { grid-template-columns: 1fr !important; }
-          .ref-grid { grid-template-columns: 1fr !important; }
           .ref-forthcoming-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (max-width: 560px) {

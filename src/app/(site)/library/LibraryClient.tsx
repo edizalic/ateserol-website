@@ -5,10 +5,15 @@ import Link from 'next/link'
 import { Breadcrumb } from '@/components/ui'
 import { useLanguage } from '@/contexts/LanguageContext'
 
+interface CategoryRef {
+  id: string
+  name: Record<string, string>
+}
+
 interface LibraryResource {
   id: string
   title: string
-  category: string
+  categories?: CategoryRef[]
   author?: string
   url?: string
   description?: Record<string, string>
@@ -27,8 +32,9 @@ const T = {
     subheading: 'A curated collection of references, resources and materials supporting the teaching and research work on this site.',
     searchPlaceholder: 'Search by title, author or category…',
     allCategories: 'All Categories',
-    visit: 'Visit', noResults: 'No resources match your search.', noPublished: 'No library resources have been published yet.',
+    visit: 'Visit', noResults: 'No resources match your search.',     noPublished: 'No library resources have been published yet.',
     author: 'Author',
+    uncategorized: 'Uncategorized',
   },
   tr: {
     breadcrumbHome: 'Ana Sayfa', breadcrumbResources: 'Kaynaklar',
@@ -36,8 +42,9 @@ const T = {
     subheading: "Bu sitedeki öğretim ve araştırma çalışmalarını destekleyen seçilmiş referans, kaynak ve materyallerin derlemesi.",
     searchPlaceholder: 'Başlık, yazar veya kategoriye göre ara…',
     allCategories: 'Tüm Kategoriler',
-    visit: 'Ziyaret Et', noResults: 'Aramanızla eşleşen kaynak bulunamadı.', noPublished: 'Henüz yayımlanmış kütüphane kaynağı yok.',
+    visit: 'Ziyaret Et', noResults: 'Aramanızla eşleşen kaynak bulunamadı.',     noPublished: 'Henüz yayımlanmış kütüphane kaynağı yok.',
     author: 'Yazar',
+    uncategorized: 'Kategorisiz',
   },
   fr: {
     breadcrumbHome: 'Accueil', breadcrumbResources: 'Ressources',
@@ -45,8 +52,9 @@ const T = {
     subheading: "Une collection sélectionnée de références, ressources et supports accompagnant le travail d'enseignement et de recherche présenté sur ce site.",
     searchPlaceholder: 'Rechercher par titre, auteur ou catégorie…',
     allCategories: 'Toutes les catégories',
-    visit: 'Consulter', noResults: "Aucune ressource ne correspond à votre recherche.", noPublished: "Aucune ressource de bibliothèque n'a encore été publiée.",
+    visit: 'Consulter', noResults: "Aucune ressource ne correspond à votre recherche.",     noPublished: "Aucune ressource de bibliothèque n'a encore été publiée.",
     author: 'Auteur',
+    uncategorized: 'Sans catégorie',
   },
 }
 
@@ -70,27 +78,44 @@ export default function LibraryClient() {
   }, [])
 
   const categories = useMemo(() => {
-    const cats = Array.from(new Set(resources.map(r => r.category))).sort()
-    return cats
-  }, [resources])
+    const map = new Map<string, CategoryRef>()
+    for (const resource of resources) {
+      for (const category of resource.categories ?? []) map.set(category.id, category)
+    }
+    return Array.from(map.values()).sort((a, b) => loc(a.name, lang).localeCompare(loc(b.name, lang)))
+  }, [resources, lang])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return resources.filter(r => {
-      const matchCat = activeCategory === 'all' || r.category === activeCategory
-      const matchQ = !q || r.title.toLowerCase().includes(q) || (r.author ?? '').toLowerCase().includes(q) || r.category.toLowerCase().includes(q) || loc(r.description, lang).toLowerCase().includes(q)
+      const names = (r.categories ?? []).map(category => loc(category.name, lang).toLowerCase())
+      const matchCat = activeCategory === 'all' || (r.categories ?? []).some(category => category.id === activeCategory)
+      const matchQ = !q || r.title.toLowerCase().includes(q) || (r.author ?? '').toLowerCase().includes(q) || names.some(name => name.includes(q)) || loc(r.description, lang).toLowerCase().includes(q)
       return matchCat && matchQ
     })
   }, [resources, search, activeCategory, lang])
 
   const grouped = useMemo(() => {
-    const map = new Map<string, LibraryResource[]>()
-    for (const r of filtered) {
-      if (!map.has(r.category)) map.set(r.category, [])
-      map.get(r.category)!.push(r)
+    const map = new Map<string, { id: string; label: string; items: LibraryResource[] }>()
+    const uncategorized: LibraryResource[] = []
+    for (const resource of filtered) {
+      const cats = activeCategory === 'all'
+        ? (resource.categories ?? [])
+        : (resource.categories ?? []).filter(category => category.id === activeCategory)
+      if (cats.length === 0) {
+        uncategorized.push(resource)
+        continue
+      }
+      for (const category of cats) {
+        const existing = map.get(category.id)
+        if (existing) existing.items.push(resource)
+        else map.set(category.id, { id: category.id, label: loc(category.name, lang), items: [resource] })
+      }
     }
-    return Array.from(map.entries())
-  }, [filtered])
+    const entries = Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label))
+    if (uncategorized.length) entries.push({ id: 'uncategorized', label: L.uncategorized, items: uncategorized })
+    return entries
+  }, [filtered, activeCategory, lang, L.uncategorized])
 
   return (
     <div style={{ backgroundColor: '#FFFFFF' }}>
@@ -118,7 +143,7 @@ export default function LibraryClient() {
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button onClick={() => setActiveCategory('all')} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: activeCategory === 'all' ? 600 : 400, color: activeCategory === 'all' ? '#FFFFFF' : '#1E2328', backgroundColor: activeCategory === 'all' ? '#0B1F33' : 'transparent', border: '1px solid #E7E0D3', padding: '7px 14px', cursor: 'pointer', letterSpacing: '0.03em' }}>{L.allCategories}</button>
               {categories.map(cat => (
-                <button key={cat} onClick={() => setActiveCategory(cat)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: activeCategory === cat ? 600 : 400, color: activeCategory === cat ? '#FFFFFF' : '#1E2328', backgroundColor: activeCategory === cat ? '#0B1F33' : 'transparent', border: '1px solid #E7E0D3', padding: '7px 14px', cursor: 'pointer', letterSpacing: '0.03em' }}>{cat}</button>
+                <button key={cat.id} onClick={() => setActiveCategory(cat.id)} style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: activeCategory === cat.id ? 600 : 400, color: activeCategory === cat.id ? '#FFFFFF' : '#1E2328', backgroundColor: activeCategory === cat.id ? '#0B1F33' : 'transparent', border: '1px solid #E7E0D3', padding: '7px 14px', cursor: 'pointer', letterSpacing: '0.03em' }}>{loc(cat.name, lang)}</button>
               ))}
             </div>
           </div>
@@ -138,17 +163,17 @@ export default function LibraryClient() {
             <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#6A747D' }}>{L.noResults}</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
-              {grouped.map(([category, items]) => (
-                <div key={category}>
+              {grouped.map(group => (
+                <div key={group.id}>
                   {/* Category heading */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
                     <span style={{ display: 'block', width: 24, height: 1.5, backgroundColor: '#B08D45', flexShrink: 0 }} />
-                    <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: '#B08D45', letterSpacing: '0.12em', textTransform: 'uppercase', margin: 0 }}>{category}</h2>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#6A747D', marginLeft: 'auto' }}>{items.length}</span>
+                    <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: '#B08D45', letterSpacing: '0.12em', textTransform: 'uppercase', margin: 0 }}>{group.label}</h2>
+                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#6A747D', marginLeft: 'auto' }}>{group.items.length}</span>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 1, border: '1px solid #E7E0D3' }}>
-                    {items.map(r => (
+                    {group.items.map(r => (
                       <div key={r.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 16, alignItems: 'center', padding: '18px 22px', backgroundColor: '#FFFFFF', borderBottom: '1px solid #F0EBE2' }}>
                         <div>
                           <div style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 15, fontWeight: 700, color: '#0B1F33', marginBottom: 3 }}>{r.title}</div>

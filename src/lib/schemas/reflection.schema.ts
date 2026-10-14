@@ -15,10 +15,14 @@ export const CreateReflectionSchema = z.object({
   subtitle: LocalizedString.optional(),
   body: LocalizedString,
   excerpt: LocalizedString.optional(),
-  category: LocalizedString.optional(),
+  categoryIds: z.array(z.string()).optional(),
   status: ReflectionStatusSchema.default('draft'),
   featured: z.boolean().default(false),
   publishedAt: DateTimeOrDate.optional(),
+  imageUrl: z.preprocess(
+    val => (val === '' ? null : val),
+    z.string().nullable().optional(),
+  ),
 })
 
 export const UpdateReflectionSchema = CreateReflectionSchema.partial()

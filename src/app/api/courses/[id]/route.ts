@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { UpdateCourseSchema } from '@/lib/schemas/course.schema'
+import { categorySet } from '@/lib/categories'
 import { getSession } from '@/lib/auth'
 
 type Params = { params: Promise<{ id: string }> }
@@ -14,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   try {
     const course = await prisma.course.findFirst({
       where: { OR: [{ id }, { slug: id }], published: true },
-      include: { category: true },
+      include: { categories: true },
     })
     if (!course) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json(course)
@@ -34,7 +35,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
     }
-    const course = await prisma.course.update({ where: { id }, data: parsed.data })
+    const { categoryIds, ...data } = parsed.data
+    const course = await prisma.course.update({
+      where: { id },
+      data: {
+        ...data,
+        ...(categoryIds !== undefined ? { categories: categorySet(categoryIds) } : {}),
+      },
+    })
     return NextResponse.json(course)
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -12,9 +12,24 @@ interface Reflection {
   excerpt?: Record<string, string>
 }
 
+export interface FeaturedEvent {
+  title: Record<string, string>
+  description?: Record<string, string>
+  date: string
+  location?: string
+  type?: string
+}
+
 function loc(obj: Record<string, string> | undefined, lang: string): string {
   if (!obj) return ''
   return obj[lang] || obj['en'] || ''
+}
+
+function formatEventDate(iso: string, lang: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  const locale = lang === 'tr' ? 'tr-TR' : lang === 'fr' ? 'fr-FR' : 'en-GB'
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(date)
 }
 
 /* ─── Section label ─── */
@@ -155,10 +170,16 @@ const TEXT = {
   },
 }
 
-export default function HomePageClient() {
+export default function HomePageClient({ featuredEvent = null }: { featuredEvent?: FeaturedEvent | null }) {
   const { lang } = useLanguage()
   const L = TEXT[lang]
   const [ref, setRef] = useState<Reflection | null>(null)
+
+  const eventTitle = featuredEvent ? (loc(featuredEvent.title, lang) || L.eventName) : L.eventName
+  const eventSubtitle = featuredEvent
+    ? [featuredEvent.type, featuredEvent.location, formatEventDate(featuredEvent.date, lang)].filter(Boolean).join(' · ')
+    : L.eventSub
+  const eventBody = featuredEvent ? (loc(featuredEvent.description, lang) || L.aim) : L.aim
 
   useEffect(() => {
     fetch('/api/reflections')
@@ -260,16 +281,16 @@ export default function HomePageClient() {
         {/* Event intro */}
         <div className="ref-event-intro">
           <div className="ref-event-icon"><FeatureIcon kind="trophy" /></div>
-          <h2>{L.eventName}</h2>
-          <p>{L.aim}</p>
+          <h2>{eventTitle}</h2>
+          <p>{eventBody}</p>
           <Link href="/portfolio" className="ref-inline-link">{L.card3Link} <ArrowRight /></Link>
         </div>
 
         {/* Event image panel */}
-        <Link href="/portfolio" className="ref-event-image" aria-label={L.eventName}>
+        <Link href="/portfolio" className="ref-event-image" aria-label={eventTitle}>
           <div className="ref-event-image-overlay">
-            <span>{L.eventName}</span>
-            <small>{L.eventSub}</small>
+            <span>{eventTitle}</span>
+            {eventSubtitle && <small>{eventSubtitle}</small>}
           </div>
         </Link>
 
@@ -367,13 +388,13 @@ export default function HomePageClient() {
         .ref-event-icon { width:58px; height:58px; color:var(--gold); margin:0 auto 12px; }
         .ref-event-icon img { width:100%; height:100%; object-fit:contain; display:block; }
         .ref-event-intro h2 { color:var(--navy); font:700 15px/1.28 'Libre Baskerville',Georgia,serif; margin:0 0 11px; text-transform:uppercase; }
-        .ref-event-intro p { color:#343A3E; font:400 12px/1.55 Inter,system-ui,sans-serif; margin:0 0 16px; }
+        .ref-event-intro p { color:#343A3E; font:400 12px/1.55 Inter,system-ui,sans-serif; margin:0 0 16px; display:-webkit-box; -webkit-line-clamp:6; -webkit-box-orient:vertical; overflow:hidden; }
         .ref-event-intro .ref-inline-link { margin:auto auto 0; }
 
         .ref-event-image { min-height:250px; background:linear-gradient(120deg,#2A2925 0%,#121C20 54%,#3C372E 100%); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
         .ref-event-image:before { content:''; position:absolute; inset:0; opacity:.35; background:repeating-linear-gradient(90deg,transparent 0 22px,rgba(255,255,255,.08) 23px 24px); }
         .ref-event-image-overlay { position:relative; text-align:center; color:#F7F5F0; padding:27px; border:1px solid rgba(211,189,135,.46); }
-        .ref-event-image-overlay span { display:block; font:700 28px/1.18 'Libre Baskerville',Georgia,serif; letter-spacing:.03em; }
+        .ref-event-image-overlay span { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font:700 28px/1.18 'Libre Baskerville',Georgia,serif; letter-spacing:.03em; }
         .ref-event-image-overlay small { display:block; color:#D3BD87; font:700 10px/1.25 Inter,system-ui,sans-serif; letter-spacing:.15em; text-transform:uppercase; margin-top:11px; }
 
         .ref-portfolio-promo { min-height:250px; position:relative; background:var(--navy); padding:22px 24px 20px; color:#FFF; overflow:hidden; display:flex; flex-direction:column; text-align:center; }

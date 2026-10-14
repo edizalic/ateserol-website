@@ -158,7 +158,7 @@ export default function Footer() {
         {/* Brand column */}
         <div className="ref-footer-brand">
           <div className="ref-footer-brand-row">
-            <AcademicMark dark />
+            <AcademicMark size={52} />
             <div>
               <div className="ref-footer-name">Ateş Erol</div>
               <div className="ref-footer-role">{role}</div>
@@ -221,7 +221,7 @@ export default function Footer() {
         .ref-footer { background:#0B1F33; color:#FFF; border-top:1px solid #20354A; }
         .ref-footer-inner { max-width:1420px; margin:0 auto; padding:48px 58px 36px; display:grid; grid-template-columns:1.45fr 1fr 1.3fr 1fr 1.15fr; gap:25px; }
         .ref-footer-brand-row { display:flex; align-items:center; gap:9px; margin-bottom:9px; }
-        .ref-footer-brand-row svg { width:50px; height:42px; flex-shrink:0; }
+        .ref-footer-brand-row img { width:52px; height:52px; flex-shrink:0; object-fit:contain; }
         .ref-footer-name { color:#F7F5F0; font:700 12px/1.2 'Libre Baskerville',Georgia,serif; }
         .ref-footer-role { color:#9BA9B2; font:400 10px/1.35 Inter,system-ui,sans-serif; letter-spacing:.07em; text-transform:uppercase; }
         .ref-footer-brand p { color:#9BA9B2; font:400 11px/1.45 Inter,system-ui,sans-serif; max-width:235px; margin:0; }

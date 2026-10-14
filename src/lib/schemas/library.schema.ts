@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { LocalizedString } from './shared'
 
 export const CreateLibraryResourceSchema = z.object({
-  category: z.string().min(1),
+  categoryIds: z.array(z.string()).optional(),
   title: z.string().min(1),
   author: z.string().optional(),
   url: z.string().optional().or(z.literal('')),

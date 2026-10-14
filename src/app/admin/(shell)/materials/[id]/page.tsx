@@ -35,7 +35,6 @@ export default async function EditMaterialPage({ params }: { params: Promise<{ i
             { value: 'dataset', label: 'Dataset' },
           ],
         },
-        { key: 'fileUrl', label: 'File (optional)', type: 'upload' },
         { key: 'course', label: 'Course (optional)' },
         { key: 'semester', label: 'Semester (optional)' },
         { key: 'published', label: 'Published', type: 'checkbox' },

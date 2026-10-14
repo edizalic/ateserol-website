@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { CreateReflectionSchema } from '@/lib/schemas/reflection.schema'
+import { categoryConnect } from '@/lib/categories'
 import { getSession } from '@/lib/auth'
 import type { ReflectionStatus } from '@/generated/prisma/client'
 
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
       where: admin
         ? (status ? { status } : {})
         : (status === 'forthcoming' ? { status: 'forthcoming' } : { status: 'published' }),
+      include: { categories: true },
       orderBy: { publishedAt: 'desc' },
     })
     return NextResponse.json(reflections)
@@ -45,7 +47,10 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('[POST /api/reflections] parsed ok, creating…')
-    const reflection = await prisma.reflection.create({ data: parsed.data })
+    const { categoryIds, ...data } = parsed.data
+    const reflection = await prisma.reflection.create({
+      data: { ...data, categories: categoryConnect(categoryIds ?? []) },
+    })
     console.log('[POST /api/reflections] created id=%s slug=%s', reflection.id, reflection.slug)
     return NextResponse.json(reflection, { status: 201 })
   } catch (err) {

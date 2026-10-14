@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { UpdateLibraryResourceSchema } from '@/lib/schemas/library.schema'
+import { categorySet } from '@/lib/categories'
 import { getSession } from '@/lib/auth'
 
 type Params = { params: Promise<{ id: string }> }
@@ -12,7 +13,10 @@ function isAdmin(session: string | null) {
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params
   try {
-    const resource = await prisma.libraryResource.findUnique({ where: { id } })
+    const resource = await prisma.libraryResource.findUnique({
+      where: { id },
+      include: { categories: true },
+    })
     if (!resource) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json(resource)
   } catch {
@@ -31,7 +35,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
     }
-    const resource = await prisma.libraryResource.update({ where: { id }, data: parsed.data })
+    const { categoryIds, ...data } = parsed.data
+    const resource = await prisma.libraryResource.update({
+      where: { id },
+      data: {
+        ...data,
+        ...(categoryIds !== undefined ? { categories: categorySet(categoryIds) } : {}),
+      },
+    })
     return NextResponse.json(resource)
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

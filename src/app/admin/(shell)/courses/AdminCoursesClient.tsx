@@ -11,7 +11,7 @@ interface Course {
   title: unknown
   published: boolean
   createdAt: Date
-  category?: { name: unknown } | null
+  categories?: { name: unknown }[]
 }
 
 function locStr(val: unknown): string {
@@ -34,7 +34,7 @@ export default function AdminCoursesClient({ courses }: { courses: Course[] }) {
       columns={[
         { header: 'Title', accessor: r => locStr(r.title) },
         { header: 'Slug', accessor: r => r.slug, width: '160px' },
-        { header: 'Category', accessor: r => r.category ? locStr(r.category.name) : '—' },
+        { header: 'Categories', accessor: r => r.categories?.length ? r.categories.map(category => locStr(category.name)).filter(Boolean).join(', ') : '—' },
         { header: 'Published', accessor: r => r.published ? 'Yes' : 'No', width: '80px' },
         { header: 'Created', accessor: r => new Date(r.createdAt).toLocaleDateString(), width: '110px' },
       ]}

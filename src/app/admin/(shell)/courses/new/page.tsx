@@ -1,9 +1,16 @@
 import type { Metadata } from 'next'
 import AdminForm from '@/components/admin/AdminForm'
+import { loadCategoryFieldOptions } from '@/lib/categories'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'New Course' }
 
-export default function NewCoursePage() {
+export default async function NewCoursePage() {
+  let options: { value: string; label: string }[] = []
+  try {
+    options = await loadCategoryFieldOptions()
+  } catch { /* db not connected */ }
+
   return (
     <AdminForm
       title="New Course"
@@ -16,7 +23,7 @@ export default function NewCoursePage() {
         { key: 'title', label: 'Title', localized: true, required: true },
         { key: 'subtitle', label: 'Subtitle (optional)', localized: true },
         { key: 'description', label: 'Description', localized: true, type: 'textarea', rows: 4 },
-        { key: 'categoryId', label: 'Category ID (optional)', placeholder: 'Prisma cuid of category' },
+        { key: 'categoryIds', label: 'Categories', type: 'multiselect', options },
         { key: 'published', label: 'Published', type: 'checkbox' },
         { key: 'files', label: 'Attach Files (optional)', type: 'files' },
       ]}

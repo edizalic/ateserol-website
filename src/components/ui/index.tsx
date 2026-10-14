@@ -4,9 +4,9 @@ import Link from 'next/link'
 
 // ─── Breadcrumb ───────────────────────────────────────────────────────────────
 
-export function Breadcrumb({ items }: { items: { label: string; href?: string }[] }) {
+export function Breadcrumb({ items, backgroundColor = '#F7F5F0' }: { items: { label: string; href?: string }[]; backgroundColor?: string }) {
   return (
-    <div style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E7E0D3', padding: '0 32px' }} className="breadcrumb-bar">
+    <div style={{ backgroundColor, borderBottom: '1px solid #E7E0D3', padding: '0 32px' }} className="breadcrumb-bar">
       <div style={{ maxWidth: 1240, margin: '0 auto', height: 44, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         {items.map((item, i) => (
           <span key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import AdminForm from '@/components/admin/AdminForm'
 import AdminFilesPanel from '@/components/admin/AdminFilesPanel'
+import { loadCategoryFieldOptions } from '@/lib/categories'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Edit Reflection' }
@@ -10,8 +11,12 @@ export const metadata: Metadata = { title: 'Edit Reflection' }
 export default async function EditReflectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   let reflection
+  let options: { value: string; label: string }[] = []
   try {
-    reflection = await prisma.reflection.findUnique({ where: { slug } })
+    ;[reflection, options] = await Promise.all([
+      prisma.reflection.findUnique({ where: { slug }, include: { categories: { select: { id: true } } } }),
+      loadCategoryFieldOptions(),
+    ])
   } catch { /* db not connected */ }
 
   if (!reflection) notFound()
@@ -24,14 +29,15 @@ export default async function EditReflectionPage({ params }: { params: Promise<{
         method="PUT"
         redirectTo="/admin/reflections"
         fileUploadPath={`/api/reflections/${slug}/files`}
-        initialValues={reflection as Record<string, unknown>}
+        initialValues={{
+          ...(reflection as Record<string, unknown>),
+          categoryIds: reflection.categories.map(category => category.id),
+        }}
         fields={[
           { key: 'slug', label: 'Slug', required: true },
           { key: 'title', label: 'Title', localized: true, required: true },
-          { key: 'subtitle', label: 'Subtitle (optional)', localized: true },
-          { key: 'excerpt', label: 'Excerpt', localized: true, type: 'textarea', rows: 2 },
           { key: 'body', label: 'Body', localized: true, type: 'textarea', rows: 12 },
-          { key: 'category', label: 'Category', localized: true },
+          { key: 'categoryIds', label: 'Categories', type: 'multiselect', options },
           {
             key: 'status', label: 'Status', type: 'select',
             options: [
@@ -41,6 +47,7 @@ export default async function EditReflectionPage({ params }: { params: Promise<{
             ],
           },
           { key: 'publishedAt', label: 'Publish Date', type: 'date' },
+          { key: 'imageUrl', label: 'Thumbnail', type: 'image' },
           { key: 'featured', label: 'Featured', type: 'checkbox' },
         ]}
       />

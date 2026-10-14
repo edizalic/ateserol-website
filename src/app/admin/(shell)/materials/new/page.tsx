@@ -22,7 +22,6 @@ export default function NewMaterialPage() {
             { value: 'dataset', label: 'Dataset' },
           ],
         },
-        { key: 'fileUrl', label: 'File (optional)', type: 'upload' },
         { key: 'course', label: 'Course (optional)', placeholder: 'e.g. BUS 101' },
         { key: 'semester', label: 'Semester (optional)', placeholder: 'e.g. Spring 2026' },
         { key: 'published', label: 'Published', type: 'checkbox' },

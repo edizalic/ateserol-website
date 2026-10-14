@@ -12,7 +12,7 @@ interface Course {
   subtitle?: Record<string, string>
   description?: Record<string, string>
   published: boolean
-  category?: { name: Record<string, string> } | null
+  categories?: { name: Record<string, string> }[]
 }
 
 function loc(obj: Record<string, string> | undefined | null, lang: string): string {
@@ -214,7 +214,7 @@ export default function CoursesClient() {
                   style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#FFFFFF', padding: '28px 26px', textDecoration: 'none', borderTop: '2px solid transparent' }}
                   onMouseEnter={e => { e.currentTarget.style.borderTopColor = '#B08D45' }}
                   onMouseLeave={e => { e.currentTarget.style.borderTopColor = 'transparent' }}>
-                  {course.category && <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: '#B08D45', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>{loc(course.category.name, lang)}</div>}
+                  {(course.categories ?? []).some(category => loc(category.name, lang)) && <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, fontWeight: 600, color: '#B08D45', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>{(course.categories ?? []).map(category => loc(category.name, lang)).filter(Boolean).join(' · ')}</div>}
                   <h3 style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 17, fontWeight: 700, color: '#0B1F33', margin: '0 0 6px', lineHeight: 1.25 }}>{loc(course.title, lang)}</h3>
                   {loc(course.subtitle, lang) && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, fontStyle: 'italic', color: '#6A747D', margin: '0 0 12px' }}>{loc(course.subtitle, lang)}</p>}
                   {loc(course.description, lang) && <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#6A747D', lineHeight: 1.65, margin: '0 0 16px', flexGrow: 1 }}>{loc(course.description, lang).slice(0, 160)}{loc(course.description, lang).length > 160 ? '…' : ''}</p>}

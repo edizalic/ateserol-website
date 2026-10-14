@@ -1,21 +1,21 @@
 import IllustratedIcon from './IllustratedIcon'
 
-type Props = { dark?: boolean }
+type Props = { size?: number }
 
 /**
- * Brand monogram mark for Ateş Erol.
- * Uses the illustrated logo asset; the `dark` prop inverts it for use on dark backgrounds.
+ * Brand crest for Ateş Erol.
+ * The asset is a full-color seal on a transparent background, so it reads on both light and dark surfaces.
  */
-export default function AcademicMark({ dark = false }: Props) {
+export default function AcademicMark({ size = 58 }: Props) {
   return (
     <IllustratedIcon
       name="ates-erol-logo"
-      size={58}
+      size={size}
       style={{
-        width: 58,
-        height: 56,
+        width: size,
+        height: size,
         objectFit: 'contain',
-        filter: dark ? 'brightness(0) invert(1)' : 'none',
+        flexShrink: 0,
       }}
       alt=""
     />

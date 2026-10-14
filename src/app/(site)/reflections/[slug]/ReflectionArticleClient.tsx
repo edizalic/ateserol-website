@@ -13,7 +13,7 @@ interface Reflection {
   title: Record<string, string>
   subtitle?: Record<string, string>
   body?: Record<string, string>
-  category?: Record<string, string>
+  categories?: { id: string; name: Record<string, string> }[]
   status: string
   publishedAt?: string
 }
@@ -105,7 +105,9 @@ export default function ReflectionArticleClient() {
   // Render published reflection from DB
   const title = loc(reflection.title, lang)
   const subtitle = loc(reflection.subtitle, lang)
-  const category = loc(reflection.category, lang)
+  const categories = (reflection.categories ?? [])
+    .map(category => ({ id: category.id, label: loc(category.name, lang) }))
+    .filter(category => category.label)
   const bodyText = loc(reflection.body, lang)
 
   // Split body into paragraphs on blank lines
@@ -119,7 +121,11 @@ export default function ReflectionArticleClient() {
 
       <header style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E7E0D3', padding: '64px 32px 48px' }}>
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
-          {category && <Tag label={category} />}
+          {categories.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {categories.map(category => <Tag key={category.id} label={category.label} />)}
+            </div>
+          )}
           <h1 style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 'clamp(30px, 5vw, 48px)', lineHeight: 1.12, color: '#0B1F33', margin: '18px 0 16px' }}>{title}</h1>
           {subtitle && <p style={{ fontFamily: 'Libre Baskerville, Georgia, serif', fontSize: 'clamp(17px, 2.5vw, 21px)', fontStyle: 'italic', lineHeight: 1.65, color: '#6A747D', margin: 0 }}>{subtitle}</p>}
           <AuthorBadge lang={lang} />

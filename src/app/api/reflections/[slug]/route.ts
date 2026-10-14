@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { UpdateReflectionSchema } from '@/lib/schemas/reflection.schema'
+import { categorySet } from '@/lib/categories'
 import { getSession } from '@/lib/auth'
 
 type Params = { params: Promise<{ slug: string }> }
@@ -15,6 +16,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     // Return published reflections to the public; forthcoming/draft require admin.
     const reflection = await prisma.reflection.findFirst({
       where: { slug, status: { in: ['published', 'forthcoming'] } },
+      include: { categories: true },
     })
     if (!reflection) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     return NextResponse.json(reflection)
@@ -34,7 +36,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
     }
-    const reflection = await prisma.reflection.update({ where: { slug }, data: parsed.data })
+    const { categoryIds, ...data } = parsed.data
+    const reflection = await prisma.reflection.update({
+      where: { slug },
+      data: {
+        ...data,
+        ...(categoryIds !== undefined ? { categories: categorySet(categoryIds) } : {}),
+      },
+    })
     return NextResponse.json(reflection)
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

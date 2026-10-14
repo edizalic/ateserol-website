@@ -10,7 +10,7 @@ export default async function AdminCoursesPage() {
   let courses: Awaited<ReturnType<typeof prisma.course.findMany>> = []
   try {
     courses = await prisma.course.findMany({
-      include: { category: true },
+      include: { categories: true },
       orderBy: { createdAt: 'desc' },
     })
   } catch { /* db not connected yet */ }

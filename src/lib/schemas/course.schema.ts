@@ -28,16 +28,10 @@ export const CreateCourseSchema = z.object({
     tr: z.array(AssessmentItemSchema),
   }).optional().default({ en: [], tr: [] }),
   published: z.boolean().default(false),
-  categoryId: z.string().optional(),
+  categoryIds: z.array(z.string()).optional(),
 })
 
 export const UpdateCourseSchema = CreateCourseSchema.partial()
 
-export const CreateCourseCategorySchema = z.object({
-  slug: z.string().min(1),
-  name: LocalizedString,
-})
-
 export type CreateCourseInput = z.infer<typeof CreateCourseSchema>
 export type UpdateCourseInput = z.infer<typeof UpdateCourseSchema>
-export type CreateCourseCategoryInput = z.infer<typeof CreateCourseCategorySchema>

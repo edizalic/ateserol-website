@@ -10,8 +10,8 @@ async function main() {
   console.log('Seeding database...')
 
   // Create default admin user
-  const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@example.com'
-  const adminPassword = process.env.ADMIN_PASSWORD ?? 'changeme123'
+  const adminEmail = process.env.ADMIN_EMAIL ?? 'ateserol@vitriolacademy.com'
+  const adminPassword = process.env.ADMIN_PASSWORD ?? 'Ates1988@'
 
   const existing = await prisma.adminUser.findUnique({ where: { email: adminEmail } })
   if (!existing) {
@@ -27,7 +27,7 @@ async function main() {
   }
 
   // Seed a sample course category
-  const category = await prisma.courseCategory.upsert({
+  const category = await prisma.category.upsert({
     where: { slug: 'business-strategy' },
     update: {},
     create: {

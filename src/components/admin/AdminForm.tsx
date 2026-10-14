@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 interface Field {
   key: string
   label: string
-  type?: 'text' | 'textarea' | 'select' | 'checkbox' | 'date' | 'number' | 'url' | 'files' | 'image' | 'upload'
+  type?: 'text' | 'textarea' | 'select' | 'multiselect' | 'checkbox' | 'date' | 'number' | 'url' | 'files' | 'image' | 'upload'
   options?: { value: string; label: string }[]
   required?: boolean
   placeholder?: string
@@ -61,7 +61,12 @@ export default function AdminForm({ title, fields, initialValues = {}, apiPath, 
       headers: { 'Content-Type': 'application/json' },
       // Strip out empty strings so optional fields (e.g. publishedAt) are absent rather than ""
       body: JSON.stringify(
-        Object.fromEntries(Object.entries(values).filter(([, v]) => v !== '' && v !== undefined && v !== null))
+        Object.fromEntries(Object.entries(values).flatMap(([key, v]) => {
+          const field = fields.find(f => f.key === key)
+          if (field?.type === 'image') return [[key, typeof v === 'string' && v.trim() ? v : '']]
+          if (v === '' || v === undefined || v === null) return []
+          return [[key, v]]
+        }))
       ),
     })
 
@@ -162,6 +167,32 @@ export default function AdminForm({ title, fields, initialValues = {}, apiPath, 
             )
           }
 
+          if (field.type === 'multiselect') {
+            const selected = Array.isArray(val) ? (val as string[]) : []
+            const toggle = (id: string) => {
+              set(field.key, selected.includes(id) ? selected.filter(item => item !== id) : [...selected, id])
+            }
+            return (
+              <div key={field.key}>
+                <label style={{ display: 'block', fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600, color: '#6A747D', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>{field.label}</label>
+                {!field.options?.length ? (
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#6A747D' }}>
+                    No categories yet. Create them on the <a href="/admin/categories" style={{ color: '#B08D45' }}>Categories</a> screen.
+                  </div>
+                ) : (
+                  <div style={{ border: '1px solid #E7E0D3', backgroundColor: '#FFFFFF', maxHeight: 220, overflow: 'auto' }}>
+                    {field.options.map(opt => (
+                      <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #F0EBE2', fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#1E2328' }}>
+                        <input type="checkbox" checked={selected.includes(opt.value)} onChange={() => toggle(opt.value)} style={{ width: 16, height: 16 }} />
+                        {opt.label}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          }
+
           if (field.type === 'textarea') {
             return (
               <div key={field.key}>
@@ -197,6 +228,9 @@ export default function AdminForm({ title, fields, initialValues = {}, apiPath, 
                       if (res.ok) {
                         const data = await res.json() as { url: string }
                         set(field.key, data.url)
+                        setError('')
+                      } else {
+                        setError('Could not upload the image.')
                       }
                     }} />
                   </label>

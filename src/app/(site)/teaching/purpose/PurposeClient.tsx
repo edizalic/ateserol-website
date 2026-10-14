@@ -229,7 +229,7 @@ export default function PurposeClient() {
 
   return (
     <div style={{ backgroundColor: '#FFFFFF' }}>
-      <div style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E7E0D3', padding: '0 32px' }}>
+      <div style={{ backgroundColor: '#F7F5F0', borderBottom: '1px solid #E7E0D3', padding: '0 32px' }}>
         <div style={{ maxWidth: 1240, margin: '0 auto', height: 44, display: 'flex', alignItems: 'center', gap: 8 }}>
           {[{ label: L.breadcrumbHome, href: '/' }, { label: L.breadcrumbTeaching, href: '/teaching' }, { label: L.breadcrumbCurrent }].map((item, i) => (
             <span key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

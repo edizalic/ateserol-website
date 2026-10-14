@@ -9,7 +9,10 @@ export const metadata: Metadata = { title: 'Library' }
 export default async function AdminLibraryPage() {
   let resources: Awaited<ReturnType<typeof prisma.libraryResource.findMany>> = []
   try {
-    resources = await prisma.libraryResource.findMany({ orderBy: { createdAt: 'desc' } })
+    resources = await prisma.libraryResource.findMany({
+      include: { categories: true },
+      orderBy: { createdAt: 'desc' },
+    })
   } catch { /* db not connected */ }
 
   return (

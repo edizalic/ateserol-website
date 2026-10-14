@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { CreateCourseSchema } from '@/lib/schemas/course.schema'
+import { categoryConnect } from '@/lib/categories'
 import { getSession } from '@/lib/auth'
 
 export async function GET(req: NextRequest) {
@@ -11,10 +12,10 @@ export async function GET(req: NextRequest) {
 
     const courses = await prisma.course.findMany({
       where: {
-        ...(categoryId ? { categoryId } : {}),
+        ...(categoryId ? { categories: { some: { id: categoryId } } } : {}),
         ...(published !== null ? { published: published === 'true' } : { published: true }),
       },
-      include: { category: true },
+      include: { categories: true },
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(courses)
@@ -36,7 +37,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 })
     }
 
-    const course = await prisma.course.create({ data: parsed.data })
+    const { categoryIds, ...data } = parsed.data
+    const course = await prisma.course.create({
+      data: { ...data, categories: categoryConnect(categoryIds ?? []) },
+    })
     return NextResponse.json(course, { status: 201 })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

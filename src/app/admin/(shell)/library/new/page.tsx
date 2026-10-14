@@ -1,9 +1,16 @@
 import type { Metadata } from 'next'
 import AdminForm from '@/components/admin/AdminForm'
+import { loadCategoryFieldOptions } from '@/lib/categories'
 
+export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'New Library Resource' }
 
-export default function NewLibraryResourcePage() {
+export default async function NewLibraryResourcePage() {
+  let options: { value: string; label: string }[] = []
+  try {
+    options = await loadCategoryFieldOptions()
+  } catch { /* db not connected */ }
+
   return (
     <AdminForm
       title="New Library Resource"
@@ -13,7 +20,7 @@ export default function NewLibraryResourcePage() {
       fileUploadPath="/api/entity-files/library/{id}"
       fields={[
         { key: 'title', label: 'Title (plain text)', required: true },
-        { key: 'category', label: 'Category', required: true, placeholder: 'e.g. Strategy, Feasibility' },
+        { key: 'categoryIds', label: 'Categories', type: 'multiselect', options },
         { key: 'author', label: 'Author (optional)' },
         { key: 'url', label: 'URL (optional)', type: 'url' },
         { key: 'description', label: 'Description', localized: true, type: 'textarea', rows: 3 },
