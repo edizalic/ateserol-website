@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import type { NextRequest } from 'next/server'
 
 const SESSION_COOKIE = 'admin_session'
 const SESSION_SECRET = process.env.SESSION_SECRET ?? 'change-me-in-production'
@@ -23,6 +24,13 @@ export async function destroySession() {
 export async function getSession(): Promise<string | null> {
   const cookieStore = await cookies()
   return cookieStore.get(SESSION_COOKIE)?.value ?? null
+}
+
+/** Read the admin session from the request Cookie header without touching
+ *  `cookies()` from `next/headers`. Using `cookies()` in an upload route
+ *  forces Next.js to buffer the entire request body first. */
+export function getSessionFromRequest(req: NextRequest): string | null {
+  return req.cookies.get(SESSION_COOKIE)?.value ?? null
 }
 
 export async function requireAdmin() {

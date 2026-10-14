@@ -32,6 +32,7 @@ export default function AdminFilesPanel({ apiPath }: AdminFilesPanelProps) {
   const [files, setFiles] = useState<FileRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [uploadPercent, setUploadPercent] = useState(0)
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [error, setError] = useState('')
   const [fetchError, setFetchError] = useState('')
@@ -59,18 +60,43 @@ export default function AdminFilesPanel({ apiPath }: AdminFilesPanelProps) {
   async function handleUpload() {
     if (!pendingFiles.length) return
     setUploading(true)
+    setUploadPercent(0)
     setError('')
     const fd = new FormData()
     for (const f of pendingFiles) fd.append('files', f)
-    const res = await fetch(apiPath, { method: 'POST', body: fd })
-    if (res.ok) {
+
+    const ok = await new Promise<boolean>((resolve) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', apiPath)
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) setUploadPercent(Math.round((e.loaded / e.total) * 100))
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(true)
+          return
+        }
+        try {
+          const data = JSON.parse(xhr.responseText) as { error?: string }
+          setError(data.error ?? `Upload failed (${xhr.status})`)
+        } catch {
+          setError(`Upload failed (${xhr.status})`)
+        }
+        resolve(false)
+      }
+      xhr.onerror = () => {
+        setError('Network error — upload did not complete.')
+        resolve(false)
+      }
+      xhr.send(fd)
+    })
+
+    if (ok) {
       setPendingFiles([])
       await fetchFiles()
-    } else {
-      const data = await res.json()
-      setError(data.error ?? 'Upload failed')
     }
     setUploading(false)
+    setUploadPercent(0)
   }
 
   async function handleDelete(fileId: string) {
@@ -134,7 +160,7 @@ export default function AdminFilesPanel({ apiPath }: AdminFilesPanelProps) {
         </label>
         {pendingFiles.length > 0 && (
           <button onClick={handleUpload} disabled={uploading} style={{ padding: '9px 20px', backgroundColor: '#0B1F33', color: '#FFFFFF', fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', border: 'none', cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.7 : 1 }}>
-            {uploading ? 'Uploading…' : `Upload ${pendingFiles.length} file${pendingFiles.length > 1 ? 's' : ''}`}
+            {uploading ? `Uploading… ${uploadPercent}%` : `Upload ${pendingFiles.length} file${pendingFiles.length > 1 ? 's' : ''}`}
           </button>
         )}
       </div>

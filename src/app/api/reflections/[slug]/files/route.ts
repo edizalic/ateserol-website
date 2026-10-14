@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { randomUUID } from 'crypto'
-import path from 'path'
 import fs from 'fs/promises'
 import prisma from '@/lib/prisma'
-import { getSession } from '@/lib/auth'
-import { ensureUploadsDir, uploadedFilePath } from '@/lib/uploads'
+import { getSessionFromRequest } from '@/lib/auth'
+import { streamUploadFiles, uploadedFilePath } from '@/lib/uploads'
 
 type Params = { params: Promise<{ slug: string }> }
 
@@ -37,7 +35,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
 // POST /api/reflections/[slug]/files  — admin only, upload one or more files
 export async function POST(req: NextRequest, { params }: Params) {
-  const session = await getSession()
+  const session = getSessionFromRequest(req)
   if (!isAdmin(session)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { slug } = await params
@@ -50,49 +48,34 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
   if (!reflection) return NextResponse.json({ error: 'Reflection not found' }, { status: 404 })
 
-  let formData: FormData
+  let savedFiles
   try {
-    formData = await req.formData()
-  } catch {
-    return NextResponse.json({ error: 'Invalid form data' }, { status: 400 })
+    savedFiles = await streamUploadFiles(req)
+  } catch (err) {
+    console.error('[POST reflections/files] stream/disk write failed:', err)
+    return NextResponse.json({ error: 'Could not save file to disk. Check uploads directory permissions.' }, { status: 500 })
   }
 
-  await ensureUploadsDir()
-
-  const entries = formData.getAll('files') as File[]
-  if (!entries.length) {
+  if (!savedFiles.length) {
     return NextResponse.json({ error: 'No files provided' }, { status: 400 })
   }
 
   const created = []
-  for (const file of entries) {
-    if (!(file instanceof File)) continue
-    const ext = path.extname(file.name)
-    const storedName = `${randomUUID()}${ext}`
-    const buffer = Buffer.from(await file.arrayBuffer())
-
-    try {
-      await fs.writeFile(uploadedFilePath(storedName), buffer)
-    } catch (err) {
-      console.error('[POST reflections/files] disk write failed:', err)
-      return NextResponse.json({ error: 'Could not save file to disk. Check uploads directory permissions.' }, { status: 500 })
-    }
-
+  for (const f of savedFiles) {
     try {
       const record = await prisma.postFile.create({
         data: {
           reflectionId: reflection.id,
-          filename: storedName,
-          originalName: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          size: buffer.length,
+          filename: f.storedName,
+          originalName: f.originalName,
+          mimeType: f.mimeType || 'application/octet-stream',
+          size: f.size,
         },
         select: { id: true, originalName: true, mimeType: true, size: true, createdAt: true },
       })
       created.push(record)
     } catch (err) {
-      // DB write failed — remove the orphaned file from disk
-      await fs.unlink(uploadedFilePath(storedName)).catch(() => {})
+      await fs.unlink(uploadedFilePath(f.storedName)).catch(() => {})
       console.error('[POST reflections/files] db write failed:', err)
       return NextResponse.json({ error: 'Could not save file record to database.' }, { status: 500 })
     }

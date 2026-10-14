@@ -6,11 +6,9 @@
 set -euo pipefail
 
 COMPOSE_FILE="docker-compose.prod.yml"
-SEED_IMAGE="ateserol_seed_runner"
 # Docker Compose creates a default network named <project-dir>_default.
 # The project directory name must match what Compose resolves on this host.
 COMPOSE_PROJECT="ateserol-website"
-DOCKER_NETWORK="${COMPOSE_PROJECT}_default"
 
 # Load .env so we can forward variables to the seed runner
 if [[ -f .env ]]; then
@@ -72,25 +70,20 @@ docker compose -f "$COMPOSE_FILE" exec -T --user root app \
 echo "  Uploads directory is ready."
 
 # ---------------------------------------------------------------------------
-# 4. Run database seed using the builder image (has full node_modules + tsx)
+# 4. Run database seed inside the running app container
 # ---------------------------------------------------------------------------
 echo ""
 echo "[4/4] Running database seed (admin table)..."
 
-# Build only the builder stage so we have tsx and all dependencies available.
-docker build --target builder -t "$SEED_IMAGE" .
-
-docker run --rm \
-  --network "$DOCKER_NETWORK" \
+# The app container already has node_modules, tsx, and the generated Prisma
+# client — no need to rebuild a separate image. Run the seed in-place.
+docker compose -f "$COMPOSE_FILE" exec -T \
   -e DATABASE_URL="postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/ateserol_prod" \
   -e ADMIN_EMAIL="$ADMIN_EMAIL" \
   -e ADMIN_PASSWORD="$ADMIN_PASSWORD" \
   -e NODE_ENV=production \
-  "$SEED_IMAGE" \
-  npm run db:seed
-
-# Clean up the temporary seed image to save disk space
-docker rmi "$SEED_IMAGE" --force > /dev/null 2>&1 || true
+  app \
+  npx tsx prisma/seed.ts
 
 echo ""
 echo "=========================================="
